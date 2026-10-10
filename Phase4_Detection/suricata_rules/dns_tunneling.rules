@@ -1,0 +1,45 @@
+# ============================================================
+# Custom Suricata Rules — DNS Tunneling Detection
+# Author: Vignesh R
+# MITRE ATT&CK: T1071.004 (Application Layer Protocol: DNS)
+# ============================================================
+
+# Rule: Unusually long DNS query (potential data exfiltration via DNS)
+alert dns $HOME_NET any -> any 53 (
+    msg:"CUSTOM DNS Tunnel — Excessively long DNS query";
+    dns.query; content:!".arpa"; nocase;
+    dns.query; pcre:"/^.{52,}/";
+    classtype:bad-unknown;
+    sid:9000010; rev:1;
+    metadata:mitre_technique T1071.004, severity high, created YYYY-MM-DD;
+)
+
+# Rule: High-frequency DNS lookups to single domain (beaconing over DNS)
+alert dns $HOME_NET any -> any 53 (
+    msg:"CUSTOM DNS Tunnel — High frequency lookups to single domain";
+    flow:to_server;
+    threshold:type both,track by_src,count 50,seconds 60;
+    classtype:bad-unknown;
+    sid:9000011; rev:1;
+    metadata:mitre_technique T1071.004, severity medium, created YYYY-MM-DD;
+)
+
+# Rule: TXT record queries (commonly used for DNS C2 data transfer)
+alert dns $HOME_NET any -> any 53 (
+    msg:"CUSTOM DNS Tunnel — Suspicious TXT record query";
+    dns.query; content:!".google.com"; nocase;
+    dns.query; content:!".microsoft.com"; nocase;
+    dns.opcode:0;
+    threshold:type both,track by_src,count 10,seconds 120;
+    classtype:bad-unknown;
+    sid:9000012; rev:1;
+    metadata:mitre_technique T1071.004, severity medium, created YYYY-MM-DD;
+)
+
+# ============================================================
+# Tuning Notes:
+# - Long query threshold (52 chars) may need adjustment per DNS infrastructure
+# - Whitelist legitimate high-volume DNS sources (DNS forwarders, resolvers)
+# - TXT record rule will trigger on SPF/DKIM lookups — add exclusions
+# - Validate with iodine or dnscat2 in lab environment
+# ============================================================

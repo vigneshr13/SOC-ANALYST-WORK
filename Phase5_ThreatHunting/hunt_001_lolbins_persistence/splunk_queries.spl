@@ -1,0 +1,53 @@
+| ============================================================
+| Hunt 001 — LOLBins Persistence Hunting Queries
+| Author: Vignesh R
+| MITRE ATT&CK: T1053.005, T1218.005, T1218.010, T1105, T1059.003
+| ============================================================
+
+| ---- Query 1: LOLBin Process Execution Overview ----
+| Purpose: Baseline — how often are LOLBins being executed and by whom?
+
+index=wineventlog sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| search Image IN ("*\\schtasks.exe", "*\\mshta.exe", "*\\certutil.exe", "*\\regsvr32.exe", "*\\rundll32.exe", "*\\wmic.exe", "*\\cmstp.exe", "*\\msbuild.exe")
+| stats count BY Image, User, ParentImage, Computer
+| sort - count
+
+
+| ---- Query 2: LOLBins Spawned by Unusual Parents ----
+| Purpose: Detect LOLBins launched from Office apps, browsers, or script engines
+
+index=wineventlog sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| search Image IN ("*\\schtasks.exe", "*\\mshta.exe", "*\\certutil.exe", "*\\regsvr32.exe")
+| search ParentImage IN ("*\\winword.exe", "*\\excel.exe", "*\\outlook.exe", "*\\powerpnt.exe", "*\\chrome.exe", "*\\firefox.exe", "*\\msedge.exe", "*\\wscript.exe", "*\\cscript.exe")
+| table _time, Computer, User, ParentImage, Image, CommandLine
+| sort _time
+
+
+| ---- Query 3: Certutil Downloading Remote Content ----
+| Purpose: Detect certutil.exe used as a download cradle (T1105)
+
+index=wineventlog sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| search Image="*\\certutil.exe"
+| search CommandLine IN ("*-urlcache*", "*-split*", "*http*", "*ftp*")
+| table _time, Computer, User, CommandLine, ParentImage
+| sort _time
+
+
+| ---- Query 4: LOLBins Making Outbound Network Connections ----
+| Purpose: Detect LOLBins initiating network connections (Sysmon EventID 3)
+
+index=wineventlog sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=3
+| search Image IN ("*\\certutil.exe", "*\\mshta.exe", "*\\regsvr32.exe", "*\\rundll32.exe", "*\\msbuild.exe")
+| where NOT cidrmatch("10.0.0.0/8", DestinationIp) AND NOT cidrmatch("172.16.0.0/12", DestinationIp) AND NOT cidrmatch("192.168.0.0/16", DestinationIp)
+| table _time, Computer, User, Image, DestinationIp, DestinationPort, DestinationHostname
+| sort _time
+
+
+| ---- Query 5: Scheduled Task Creation by Non-Admin Users ----
+| Purpose: Detect persistence via schtasks.exe by regular users
+
+index=wineventlog sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
+| search Image="*\\schtasks.exe" CommandLine="*/Create*"
+| search NOT User IN ("SYSTEM", "Administrator", "YOURLAB\\admin")
+| table _time, Computer, User, CommandLine, ParentImage
+| sort _time

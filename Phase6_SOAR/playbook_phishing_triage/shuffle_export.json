@@ -1,0 +1,70 @@
+{
+  "_comment": "Shuffle SOAR Workflow Export — Phishing Email Triage",
+  "_instructions": "Import this file into Shuffle via Workflows > Import. Configure API keys for VirusTotal, AbuseIPDB, and TheHive before first run.",
+  "name": "Phishing_Email_Triage_v1",
+  "description": "Automated phishing email triage: extract IOCs, enrich via VT/AbuseIPDB, classify risk, create TheHive case",
+  "triggers": [
+    {
+      "type": "webhook",
+      "name": "phishing_report_webhook",
+      "description": "Receives phishing email report with sender, URLs, and attachment hashes"
+    }
+  ],
+  "actions": [
+    {
+      "id": "1",
+      "name": "Extract IOCs",
+      "app": "Tools",
+      "action": "parse_ioc",
+      "description": "Parse email body for URLs, IPs, domains, and file hashes"
+    },
+    {
+      "id": "2",
+      "name": "VirusTotal URL Check",
+      "app": "VirusTotal",
+      "action": "url_report",
+      "description": "Check each extracted URL against VirusTotal",
+      "depends_on": ["1"]
+    },
+    {
+      "id": "3",
+      "name": "AbuseIPDB Sender Check",
+      "app": "HTTP",
+      "action": "curl",
+      "description": "Query AbuseIPDB for sender IP reputation score",
+      "depends_on": ["1"]
+    },
+    {
+      "id": "4",
+      "name": "VirusTotal Hash Check",
+      "app": "VirusTotal",
+      "action": "file_report",
+      "description": "Check attachment file hashes against VirusTotal",
+      "depends_on": ["1"]
+    },
+    {
+      "id": "5",
+      "name": "Risk Classification",
+      "app": "Tools",
+      "action": "execute_python",
+      "description": "Aggregate enrichment results and calculate risk score (LOW/MEDIUM/HIGH)",
+      "depends_on": ["2", "3", "4"]
+    },
+    {
+      "id": "6",
+      "name": "Create TheHive Case",
+      "app": "TheHive",
+      "action": "create_case",
+      "description": "Create case with all enrichment data and IOCs as observables",
+      "depends_on": ["5"]
+    },
+    {
+      "id": "7",
+      "name": "Notify SOC",
+      "app": "HTTP",
+      "action": "curl",
+      "description": "Send webhook notification to SOC channel with case summary",
+      "depends_on": ["6"]
+    }
+  ]
+}

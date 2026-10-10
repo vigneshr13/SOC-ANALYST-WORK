@@ -1,0 +1,61 @@
+title: Suspicious PowerShell Execution — Encoded Commands and Download Cradles
+id: # TODO: generate UUID
+status: experimental
+description: |
+    Detects PowerShell execution patterns commonly associated with malicious activity:
+    encoded commands, download cradles (IEX + WebClient), and AMSI bypass attempts.
+author: Vignesh R
+date: YYYY/MM/DD
+modified: YYYY/MM/DD
+references:
+    - https://attack.mitre.org/techniques/T1059/001/
+    - https://attack.mitre.org/techniques/T1562/001/
+tags:
+    - attack.execution
+    - attack.t1059.001
+    - attack.defense_evasion
+    - attack.t1562.001
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_encoded:
+        Image|endswith: '\powershell.exe'
+        CommandLine|contains:
+            - '-enc '
+            - '-EncodedCommand'
+            - '-ec '
+    selection_download:
+        Image|endswith: '\powershell.exe'
+        CommandLine|contains|all:
+            - 'Net.WebClient'
+            - 'DownloadString'
+    selection_amsi_bypass:
+        Image|endswith: '\powershell.exe'
+        CommandLine|contains:
+            - 'AmsiUtils'
+            - 'amsiInitFailed'
+            - 'SetValue($null,$true)'
+    selection_hidden:
+        Image|endswith: '\powershell.exe'
+        CommandLine|contains:
+            - '-WindowStyle Hidden'
+            - '-w hidden'
+            - '-nop -sta'
+    condition: selection_encoded or selection_download or selection_amsi_bypass or selection_hidden
+fields:
+    - CommandLine
+    - ParentImage
+    - User
+    - Computer
+falsepositives:
+    - Legitimate admin scripts using encoded commands for special characters
+    - Software deployment tools using PowerShell download cradles
+    - SCCM / Intune management scripts
+level: high
+
+# ============================================================
+# Conversion Commands:
+#   sigma-cli convert -t splunk -p sysmon suspicious_powershell.yml
+#   sigma-cli convert -t wazuh suspicious_powershell.yml
+# ============================================================

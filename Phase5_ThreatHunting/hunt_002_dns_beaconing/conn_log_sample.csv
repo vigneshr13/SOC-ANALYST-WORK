@@ -1,0 +1,3 @@
+ts,uid,id.orig_h,id.orig_p,id.resp_h,id.resp_p,proto,service,duration,orig_bytes,resp_bytes
+# Sanitised sample data — replace with actual Zeek conn.log export
+# Export command: zeek-cut ts uid id.orig_h id.orig_p id.resp_h id.resp_p proto service duration orig_bytes resp_bytes < conn.log > conn_log_sample.csv

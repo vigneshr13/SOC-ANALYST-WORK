@@ -1,0 +1,43 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+
+# Sensitive data — NEVER commit these
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.*
+secrets.*
+passwords.*
+
+# Large binary files — use screenshots/ for evidence
+*.vmdk
+*.ova
+*.iso
+*.vdi
+
+# Splunk
+*.csv.gz
+*.tsidx
+
+# Temp files
+*.tmp
+*.bak
+*.log.old

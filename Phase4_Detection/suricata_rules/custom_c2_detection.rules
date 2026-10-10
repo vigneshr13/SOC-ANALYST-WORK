@@ -1,0 +1,47 @@
+# ============================================================
+# Custom Suricata Rules — C2 Beaconing Detection
+# Author: Vignesh R
+# MITRE ATT&CK: T1071 (Application Layer Protocol), T1573 (Encrypted Channel)
+# ============================================================
+
+# Rule: HTTP beaconing — regular interval callbacks to external host
+# Detection: HTTP GET requests at regular intervals (±5s jitter) to same destination
+alert http $HOME_NET any -> $EXTERNAL_NET any (
+    msg:"CUSTOM C2 Beacon — Periodic HTTP callback detected";
+    flow:to_server,established;
+    http.method; content:"GET";
+    threshold:type both,track by_src,count 10,seconds 600;
+    classtype:trojan-activity;
+    sid:9000001; rev:1;
+    metadata:mitre_technique T1071.001, severity high, created YYYY-MM-DD;
+)
+
+# Rule: Suspicious User-Agent strings commonly used by malware
+alert http $HOME_NET any -> $EXTERNAL_NET any (
+    msg:"CUSTOM C2 Beacon — Suspicious User-Agent string";
+    flow:to_server,established;
+    http.user_agent; content:"Mozilla/4.0"; nocase;
+    http.user_agent; content:!"compatible";
+    classtype:trojan-activity;
+    sid:9000002; rev:1;
+    metadata:mitre_technique T1071.001, severity medium, created YYYY-MM-DD;
+)
+
+# Rule: HTTPS connections to IP addresses (no SNI / no domain)
+alert tls $HOME_NET any -> $EXTERNAL_NET any (
+    msg:"CUSTOM C2 Beacon — TLS connection to bare IP address";
+    flow:to_server,established;
+    tls.sni; content:!".";
+    threshold:type both,track by_src,count 3,seconds 300;
+    classtype:trojan-activity;
+    sid:9000003; rev:1;
+    metadata:mitre_technique T1573.002, severity high, created YYYY-MM-DD;
+)
+
+# ============================================================
+# Tuning Notes:
+# - Adjust threshold counts based on environment network baseline
+# - Whitelist known update servers and CDNs
+# - User-Agent rule may trigger on legacy applications
+# - Test with Atomic Red Team T1071.001 simulation
+# ============================================================

@@ -1,0 +1,14 @@
+{
+  "_comment": "Grafana Dashboard Export — SOC Operational Metrics",
+  "_instructions": "Import via Grafana UI: Dashboards > Import > Upload JSON file. Configure data sources before first use.",
+  "dashboard": {
+    "title": "SOC Operational Metrics — Briticana Internship",
+    "panels": [
+      {"title": "Alert Volume by Severity", "type": "timeseries", "datasource": "wazuh-indexer"},
+      {"title": "MTTA Tracking (Target: ≤ 15 min)", "type": "gauge", "datasource": "thehive-api"},
+      {"title": "False Positive Rate (Target: < 5%)", "type": "timeseries", "datasource": "thehive-api"},
+      {"title": "Top 10 Triggered Detection Rules", "type": "barchart", "datasource": "wazuh-indexer"},
+      {"title": "Top Attacker IPs", "type": "table", "datasource": "wazuh-indexer"}
+    ]
+  }
+}

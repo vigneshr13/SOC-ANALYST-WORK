@@ -1,0 +1,36 @@
+| ---- Rule Metadata ----
+| Rule Name: Brute Force to Successful Login
+| MITRE ATT&CK: T1110 (Credential Access — Brute Force)
+| Severity: High
+| Description: Detects 5+ failed logins followed by a successful login from the same source IP within 10 minutes
+| Author: Vignesh R
+| Created: YYYY-MM-DD
+| ---- Search Logic ----
+
+index=wineventlog sourcetype="WinEventLog:Security"
+    (EventCode=4625 OR EventCode=4624)
+| eval event_type=if(EventCode=4625, "failure", "success")
+| stats
+    count(eval(event_type="failure")) AS failed_count
+    count(eval(event_type="success")) AS success_count
+    earliest(_time) AS first_event
+    latest(_time) AS last_event
+    values(TargetUserName) AS targeted_accounts
+    BY Source_Network_Address
+| where failed_count >= 5 AND success_count >= 1
+| eval time_window_minutes = round((last_event - first_event) / 60, 2)
+| where time_window_minutes <= 10
+| eval severity="HIGH"
+| table Source_Network_Address, targeted_accounts, failed_count, success_count, time_window_minutes, severity, first_event, last_event
+
+| ---- Alert Configuration ----
+| Schedule: Every 10 minutes
+| Alert condition: Number of results > 0
+| Alert action: Create TheHive case, send webhook notification
+| Throttle: 1 hour per Source_Network_Address
+
+| ---- Tuning Notes ----
+| - Adjust failed_count threshold based on environment baseline
+| - Add whitelist for known jump servers or VPN concentrators
+| - Consider excluding service accounts with known automated retry behaviour
+| - Monitor for distributed brute force (same target, multiple sources) separately

@@ -1,0 +1,43 @@
+| ---- Rule Metadata ----
+| Rule Name: Lateral Movement via PsExec
+| MITRE ATT&CK: T1021.002 (Lateral Movement — SMB/Windows Admin Shares)
+| Severity: High
+| Description: Detects PsExec service installation on remote hosts correlated with new network logon sessions
+| Author: Vignesh R
+| Created: YYYY-MM-DD
+| ---- Search Logic ----
+
+index=wineventlog sourcetype="WinEventLog:Security" OR sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational"
+    (EventCode=7045 OR EventCode=1 OR EventCode=3)
+| eval detection_type=case(
+    EventCode=7045 AND ServiceName="PSEXESVC", "psexec_service_install",
+    EventCode=1 AND (Image="*\\psexec.exe" OR Image="*\\PsExec64.exe" OR ParentImage="*\\PSEXESVC.exe"), "psexec_process",
+    EventCode=3 AND DestinationPort=445 AND Image="*\\psexec.exe", "smb_connection",
+    1=1, "other"
+)
+| where detection_type != "other"
+| stats
+    values(detection_type) AS detection_chain
+    values(Image) AS processes
+    values(DestinationIp) AS target_hosts
+    values(User) AS executing_users
+    earliest(_time) AS first_seen
+    latest(_time) AS last_seen
+    count AS event_count
+    BY ComputerName
+| where mvcount(detection_chain) >= 2
+| eval severity="HIGH"
+| table ComputerName, executing_users, target_hosts, detection_chain, processes, event_count, first_seen, last_seen
+
+| ---- Alert Configuration ----
+| Schedule: Every 5 minutes
+| Alert condition: Number of results > 0
+| Alert action: Create TheHive case (severity: HIGH), email SOC lead
+| Throttle: 30 minutes per ComputerName
+
+| ---- Tuning Notes ----
+| - Whitelist IT admin workstations that legitimately use PsExec
+| - Exclude known service accounts used for patch deployment
+| - Consider adding PAExec and RemCom as PsExec alternatives
+| - Correlate with Active Directory authentication logs for context
+| - High false positive risk in environments using SCCM or similar remote admin tools
