@@ -1,4 +1,4 @@
-# Phase 1 — Task 1 — Activity 1: Log-Based Authentication Anomaly Triage
+# Phase 1 - Task 1 - Activity 1: Log-Based Authentication Anomaly Triage
 
 ## Attack Simulation
 
@@ -11,7 +11,7 @@ hydra -l analyst -P passwords.txt 10.10.10.20 rdp -t 4 -vV
 
 **Purpose:** Generate realistic failed authentication logs to practice SOC triage, detection, and MITRE ATT&CK mapping in Splunk.
 
-## Detection — Splunk Queries
+## Detection - Splunk Queries
 
 **Basic failed logon search:**
 
@@ -28,15 +28,6 @@ EXTRACT-src_ip = Source Network Address:\s+(?<src_ip>[^\s]+)
 EXTRACT-logon_type = Logon Type:\s+(?<LogonType>\d+)
 EXTRACT-failure_reason = Failure Reason:\s+(?<FailureReason>.+)
 
-
-**Sub Status analysis query:**
-
-index=main source="WinEventLog:Security" EventCode=4625
-| rex “Sub Status:\s+(?<sub_status>\S+)”
-| table _time, src_ip, TargetUserName, sub_status
-| sort -_time
-
-
 ## Brute-Force Identification
 
 **Pattern identified:**
@@ -49,8 +40,8 @@ index=main source="WinEventLog:Security" EventCode=4625
 **Threshold rule:** 5 or more failed login attempts from the same source IP within 10 minutes = BRUTE_FORCE
 
 **Sub Status code analysis:**
-- `0xC0000064` — username does not exist on the target system
-- `0xC000006A` — username exists but password is incorrect
+- `0xC0000064` - username does not exist on the target system
+- `0xC000006A` - username exists but password is incorrect
 
 The first round of attacks returned Sub Status `0xC0000064` (unknown user). After creating the `analyst` account on the Windows endpoint, subsequent attacks returned `0xC000006A` (wrong password), confirming the account existed and was being password-guessed.
 
@@ -71,11 +62,11 @@ Script: `auth_triage.py`
 **Logic:**
 1. Reads the raw Splunk CSV export (`auth_triage_raw.csv`)
 2. Counts failed logins per source IP using Python's `Counter`
-3. Applies SHA-256 hashing to usernames — in a production SOC, raw usernames are PII and must be masked in reports shared outside the team
+3. Applies SHA-256 hashing to usernames - in a production SOC, raw usernames are PII and must be masked in reports shared outside the team
 4. Classifies each event:
-   - **BRUTE_FORCE** — 5+ failures from same IP
-   - **SUSPICIOUS** — 3-4 failures from same IP
-   - **BENIGN** — under 3 failures
+   - **BRUTE_FORCE** - 5+ failures from same IP
+   - **SUSPICIOUS** - 3-4 failures from same IP
+   - **BENIGN** - under 3 failures
 5. Tags BRUTE_FORCE and SUSPICIOUS events with MITRE technique T1110.001
 6. Outputs enriched CSV (`Phase1_Task1_Activity1_AuthTriage.csv`)
 
@@ -85,14 +76,14 @@ Script: `auth_triage.py`
 
 ## Verdict and Recommended Response
 
-**Verdict:** BRUTE_FORCE — confirmed password guessing attack
+**Verdict:** BRUTE_FORCE - confirmed password guessing attack
 
 **Recommended actions:**
 1. Block source IP 10.10.10.30 at the perimeter firewall immediately
 2. Force password reset for the targeted `analyst` account
 3. Enable account lockout policy (e.g., lock after 5 failed attempts for 30 minutes)
 4. Create a Splunk alert: trigger when EventCode 4625 count > 5 from a single IP within 10 minutes
-5. Investigate whether the attacker gained access — search for EventCode 4624 (successful logon) from the same source IP
+5. Investigate whether the attacker gained access - search for EventCode 4624 (successful logon) from the same source IP
 6. Cross-reference the source IP against threat intelligence feeds
 
 ## Lab Environment
