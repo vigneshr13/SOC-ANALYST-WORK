@@ -95,4 +95,5 @@ Script: `auth_triage.py`
 | Kali | Kali Linux | 10.10.10.30 | Attacker |
 
 ## Screenshots
-![Splunk Search Results](splunk_brute_force_results.png)
+![Splunk Search Results](splunk_brute_force_results1.png)
+![Splunk Search Results](splunk_brute_force_results2.png)
