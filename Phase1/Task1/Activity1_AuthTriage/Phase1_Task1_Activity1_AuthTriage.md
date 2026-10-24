@@ -97,4 +97,4 @@ Script: `auth_triage.py`
 ## Screenshots
 ![Splunk Search Results](splunk_brute_force_results1.png)
 ![Splunk Search Results](splunk_brute_force_results2.png)
-![Splunk Search Results](splunk_brute_force_results_completetabel.png)
+![Splunk Search Results](splunk_brute_force_results_completetable.png)
