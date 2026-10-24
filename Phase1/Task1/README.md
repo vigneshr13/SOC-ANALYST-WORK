@@ -16,7 +16,7 @@
 
 | # | Activity | Deliverable | Format | Tools |
 |---|---|---|---|---|
-| 1 | Log-Based Authentication Anomaly Triage | `Phase1_Task1_Activity1_AuthTriage.csv` | CSV | Wazuh, Python 3, MISP, TheHive |
+| 1 | Log-Based Authentication Anomaly Triage | `Phase1_Task1_Activity1_AuthTriage.csv` | CSV | Splunk, Sysmon, Hydra, Python 3 |
 | 2 | PowerShell Execution Forensics | `Phase1_Task1_Activity2_PSForensics.html` | HTML | Wireshark, TShark, VirtualBox, Bash |
 | 3 | Network Traffic Anomaly Visualization | `Phase1_Task1_Activity3_NetworkAnomaly.txt` | TXT | Suricata, Zeek, Wireshark |
 | 4 | Phishing Email Threat Assessment | `Phase1_Task1_Activity4_PhishingTriage.xlsx` | XLSX | MISP, Python 3 |
@@ -26,12 +26,13 @@
 ---
 
 ### Activity 1: Log-Based Authentication Anomaly Triage
-- Analyze `wazuh_auth_brute_force_events.log` for brute-force attempts
-- Extract source IPs, timestamps, correlate with expected auth patterns
-- Map anomalous requests to MITRE ATT&CK (Credential Access — T1110)
-- Parse logs with Python 3, apply dynamic data masking (SHA-256) to usernames/IPs
-- Cross-reference IPs against MISP threat intel feeds
-- Escalate confirmed malicious IPs in TheHive
+- Simulated RDP brute-force attack using Hydra from Kali (10.10.10.30) against Windows endpoint (10.10.10.20)
+- Collected failed logon events (EventCode 4625) via Splunk Universal Forwarder and Sysmon
+- Extracted source IPs, timestamps, usernames, and logon types using Splunk field extractions (props.conf)
+- Mapped to MITRE ATT&CK T1110.001 (Password Guessing)
+- Parsed exported logs with Python 3, applied SHA-256 masking to usernames per data handling policy
+- Classified events using threshold analysis: 5+ failures from same IP = BRUTE_FORCE
+- Distinguished Sub Status codes: 0xC000006A (valid user, wrong password) vs 0xC0000064 (unknown user)
 
 ### Activity 2: PowerShell Execution Forensics
 - Analyze `windows_event_log_powershell_execution.log`
