@@ -109,7 +109,7 @@ All deliverables follow: `Phase{n}_Task{n}_Activity{n}_ShortDescription.ext`
 
 ## Progress Tracker
 
-### Months 1–4: Briticana Core Programme
+### Months 1–4:  Core SOC
 - [ ] **Phase 1** — Foundational Triage & Visibility
   - [ ] Task 1: Alert triage, log analysis, phishing assessment, vulnerability scanning
 - [ ] **Phase 2** — Automation, Optimization & Compliance
