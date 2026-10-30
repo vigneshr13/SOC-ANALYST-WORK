@@ -97,6 +97,33 @@ Script: `threat_intel_check.py`
 - High pulse count = known malicious infrastructure, escalate immediately
 - This step informs the severity level and response priority in the incident ticket
 
+## Incident Escalation - TheHive (Documented)
+
+In a production SOC, confirmed brute-force attacks would be escalated to a case management platform like TheHive. Due to lab resource constraints, this escalation is documented rather than executed.
+
+**TheHive API escalation payload:**
+```json
+{
+    "title": "Brute Force from 10.10.10.30",
+    "description": "RDP brute-force attack detected. 9 failed login attempts targeting 'analyst' account from Kali Linux (10.10.10.30) within seconds. NTLM authentication, Logon Type 3. Sub Status 0xC000006A confirms valid username with wrong passwords. MITRE ATT&CK T1110.001.",
+    "severity": 2,
+    "tlp": 2,
+    "tags": ["T1110.001", "brute-force", "RDP"],
+    "owner": "analyst",
+    "flag": false,
+    "status": "Open"
+}
+```
+
+**Escalation workflow:**
+1. SOC L1 analyst detects brute-force via Splunk alert
+2. Validates findings - confirms source IP, target account, attack pattern
+3. Cross-references IP against threat intel (OTX/MISP)
+4. Creates a case in TheHive with severity, MITRE tags, and evidence
+5. Attaches triage CSV and threat intel results as observables
+6. Assigns to L2 for further investigation and response
+7. L2 decides on IP block, account lockout, and broader scope check
+
 ## Verdict and Recommended Response
 
 **Verdict:** BRUTE_FORCE - confirmed password guessing attack
