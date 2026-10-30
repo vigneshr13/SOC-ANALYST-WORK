@@ -74,6 +74,29 @@ Script: `auth_triage.py`
 - Input: `analyst`
 - Output: `f44ceb062e35dfee` (first 16 chars of SHA-256 hash)
 
+## Threat Intelligence Cross-Reference
+
+Script: `threat_intel_check.py`
+
+**Purpose:** Cross-reference attacker IPs against AlienVault OTX threat intelligence feed (used as a lightweight MISP substitute for the lab environment).
+
+**Logic:**
+1. Takes attacker IPs identified during triage
+2. Queries the OTX AlienVault API for each IP
+3. Checks pulse count (number of security reports mentioning this IP)
+4. Returns country of origin and reputation score
+5. Outputs results to `threat_intel_results.csv` and `threat_intel_results.json`
+
+**Results:**
+- IP `10.10.10.30` returned 0 pulses — expected since this is a private lab IP
+- In a production SOC, public attacker IPs would return real threat data showing prior attack history, associated campaigns, and known malware families
+
+**Why this matters:**
+- A SOC analyst doesn't just detect and block — they check if the attacker is a known threat
+- 0 pulses = possible new attacker or compromised machine, needs further investigation
+- High pulse count = known malicious infrastructure, escalate immediately
+- This step informs the severity level and response priority in the incident ticket
+
 ## Verdict and Recommended Response
 
 **Verdict:** BRUTE_FORCE - confirmed password guessing attack
@@ -93,6 +116,15 @@ Script: `auth_triage.py`
 | Ubuntu | Ubuntu Linux | 10.10.10.10 | Splunk server (SIEM) |
 | Windows | Windows 11 IoT LTSC | 10.10.10.20 | Target endpoint |
 | Kali | Kali Linux | 10.10.10.30 | Attacker |
+
+## Files
+- `auth_triage.py` — brute-force triage and classification script
+- `auth_triage_raw.csv` — raw Splunk export
+- `Phase1_Task1_Activity1_AuthTriage.csv` — enriched triage output
+- `bruteforce_on_unknown_username.csv` — first attack round (unknown user)
+- `threat_intel_check.py` — OTX threat intelligence lookup script
+- `threat_intel_results.csv` — threat intel output
+- `threat_intel_results.json` — full API response
 
 ## Screenshots
 ![Splunk Search Results](splunk_brute_force_results1.png)
